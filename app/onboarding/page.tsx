@@ -168,7 +168,7 @@ export default function OnboardingPage() {
                 const result = await response.json();
                 setQuizResult(result);
                 if (passed) {
-                  router.push('/onboarding/complete');
+                  router.push(`/onboarding/complete?score=${score}`);
                 }
               }
             } catch (error) {

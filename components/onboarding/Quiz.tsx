@@ -39,7 +39,7 @@ export function Quiz({ questions, onComplete }: QuizProps) {
       }, 0);
 
       const passed = score / questions.length >= 0.7; // 70% passing threshold
-      onComplete(score, passed);
+      onComplete((score / questions.length) * 100, passed);
     } else {
       setCurrentQuestion(currentQuestion + 1);
     }
