@@ -3,6 +3,7 @@ import { users } from '@/lib/schema';
 import { eq } from 'drizzle-orm';
 import { PendingApprovalsClient } from './PendingApprovalsClient';
 
+export const revalidate = 0;
 export default async function PendingApprovalsPage() {
   const pendingUsers = await db
     .select()

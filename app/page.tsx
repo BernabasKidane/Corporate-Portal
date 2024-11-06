@@ -1,8 +1,25 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, CheckCircle2, Shield, Users } from 'lucide-react';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
+import { db } from '@/lib/db';
+import { eq } from 'drizzle-orm';
+import { onboardingModules, onboardingProgress } from '@/lib/schema';
 
-export default function Home() {
+export default async function Home() {
+  const session = await getServerSession(authOptions);
+  let onboardingStatus = null;
+
+  if (session?.user) {
+    // Fetch onboarding status from your database
+    const userOnboarding = await db
+      .select()
+      .from(onboardingProgress)
+      .where(eq(onboardingProgress.userId, parseInt(session.user.id)));
+    onboardingStatus = userOnboarding.length > 0 ? 'COMPLETED' : 'NOT_STARTED'; // 'NOT_STARTED', 'IN_PROGRESS', 'COMPLETED'
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
@@ -17,16 +34,31 @@ export default function Home() {
               development. Start your journey with us today.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
-              <Link href="/auth/signin">
-                <Button size="lg" className="gap-2">
-                  Get Started <ArrowRight className="w-4 h-4" />
-                </Button>
-              </Link>
-              <Link href="/auth/signup">
-                <Button variant="outline" size="lg">
-                  Register
-                </Button>
-              </Link>
+              {!session?.user ? (
+                <Link href="/auth/signin">
+                  <Button size="lg" className="gap-2">
+                    Sign In <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+              ) : onboardingStatus === 'IN_PROGRESS' ? (
+                <Link href="/onboarding">
+                  <Button size="lg" className="gap-2">
+                    Start Onboarding <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+              ) : onboardingStatus === 'COMPLETED' ? (
+                <Link href="/onboarding">
+                  <Button size="lg" className="gap-2">
+                    Continue Onboarding <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+              ) : (
+                <Link href="/onboarding">
+                  <Button size="lg" className="gap-2">
+                    Start Onboarding <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>

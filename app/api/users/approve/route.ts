@@ -5,11 +5,16 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
+export const revalidate = 0;
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || (session.user as any).role !== 'manager') {
+    if (
+      !session?.user ||
+      ((session.user as any).role !== 'manager' &&
+        (session.user as any).role !== 'admin')
+    ) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

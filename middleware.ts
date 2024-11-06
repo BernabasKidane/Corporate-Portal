@@ -15,7 +15,10 @@ export const middleware = withAuth(
     }
 
     // Manager routes
-    if (path.startsWith('/manager') && token?.role !== 'manager') {
+    if (
+      path.startsWith('/manager') &&
+      !(token?.role === 'manager' || token?.role === 'admin')
+    ) {
       return NextResponse.redirect(new URL('/auth/signin', req.url));
     }
 

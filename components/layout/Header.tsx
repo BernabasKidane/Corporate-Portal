@@ -18,7 +18,10 @@ export function Header() {
   const roleBasedLinks = () => {
     switch (session?.user?.role) {
       case 'admin':
-        return [{ href: '/admin/dashboard', label: 'Admin Dashboard' }];
+        return [
+          { href: '/admin/dashboard', label: 'Admin Dashboard' },
+          { href: '/manager/pending-approvals', label: 'Pending Approvals' },
+        ];
       case 'manager':
         return [
           { href: '/manager/pending-approvals', label: 'Pending Approvals' },

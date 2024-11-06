@@ -14,8 +14,6 @@ export async function POST(request: Request) {
       .from(users)
       .where(eq(users.email, email));
 
-    console.log({ existingUser });
-
     if (existingUser.length > 0) {
       return NextResponse.json(
         { error: 'User already exists' },
