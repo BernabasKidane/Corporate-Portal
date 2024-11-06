@@ -1,12 +1,21 @@
 import { LoginForm } from '@/components/auth/LoginForm';
 import { Metadata } from 'next';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { redirect } from 'next/navigation'; 
 
 export const metadata: Metadata = {
   title: 'Sign In | Employee Portal',
   description: 'Sign in to your account',
 };
 
-export default function SignInPage() {
+export default async function SignInPage() {
+  const session = await getServerSession(authOptions);
+
+  if (session) {
+    redirect('/');
+  }
+
   return (
     <div className="container relative min-h-[calc(100vh-4rem)] flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0">
       <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex dark:border-r">
