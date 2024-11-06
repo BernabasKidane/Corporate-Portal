@@ -22,13 +22,19 @@ export function Quiz({ questions, onComplete }: QuizProps) {
   const [answers, setAnswers] = useState<string[]>([]);
   const [selectedAnswer, setSelectedAnswer] = useState<string>('');
 
+  // If there are no questions, don't render the quiz
+  if (!questions || questions.length === 0) {
+    return null;
+  }
+
   const handleNext = () => {
     setAnswers([...answers, selectedAnswer]);
     setSelectedAnswer('');
 
     if (currentQuestion === questions.length - 1) {
-      // Calculate score
-      const score = answers.reduce((acc, answer, index) => {
+      // Calculate score including the last answer
+      const finalAnswers = [...answers, selectedAnswer];
+      const score = finalAnswers.reduce((acc, answer, index) => {
         return answer === questions[index].correctAnswer ? acc + 1 : acc;
       }, 0);
 
@@ -39,6 +45,8 @@ export function Quiz({ questions, onComplete }: QuizProps) {
     }
   };
 
+  const currentQuestionData = questions[currentQuestion];
+
   return (
     <Card className="p-6 space-y-4">
       <h2 className="text-2xl font-bold">Final Quiz</h2>
@@ -47,13 +55,15 @@ export function Quiz({ questions, onComplete }: QuizProps) {
       </p>
 
       <div className="space-y-4">
-        <p className="text-lg">{questions[currentQuestion].question}</p>
+        <p className="text-lg">{currentQuestionData.question}</p>
 
         <RadioGroup value={selectedAnswer} onValueChange={setSelectedAnswer}>
-          {questions[currentQuestion].options.map((option, index) => (
+          {currentQuestionData.options.map((option, index) => (
             <div key={index} className="flex items-center space-x-2">
               <RadioGroupItem value={option} id={`option-${index}`} />
-              <label htmlFor={`option-${index}`}>{option}</label>
+              <label htmlFor={`option-${index}`} className="text-sm">
+                {option}
+              </label>
             </div>
           ))}
         </RadioGroup>

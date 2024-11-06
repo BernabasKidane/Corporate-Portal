@@ -1,17 +1,17 @@
 'use client';
 
 import { useState } from 'react';
+import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useRouter } from 'next/navigation';
 
-export function RegisterForm() {
+export function LoginForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    name: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -19,22 +19,21 @@ export function RegisterForm() {
     setError(null);
 
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+      const result = await signIn('credentials', {
+        email: formData.email,
+        password: formData.password,
+        redirect: false,
       });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Registration failed');
+      if (result?.error) {
+        setError('Invalid credentials');
+        return;
       }
 
-      router.push('/auth/pending-approval');
+      router.push('/dashboard');
+      router.refresh();
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Registration failed');
+      setError('An error occurred during login');
     }
   };
 
@@ -43,15 +42,6 @@ export function RegisterForm() {
       {error && (
         <div className="bg-red-100 text-red-600 p-3 rounded">{error}</div>
       )}
-      <div>
-        <Input
-          type="text"
-          placeholder="Full Name"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          required
-        />
-      </div>
       <div>
         <Input
           type="email"
@@ -73,7 +63,7 @@ export function RegisterForm() {
         />
       </div>
       <Button type="submit" className="w-full">
-        Register
+        Login
       </Button>
     </form>
   );
