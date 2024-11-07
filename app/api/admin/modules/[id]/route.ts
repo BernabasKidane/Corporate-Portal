@@ -11,7 +11,7 @@ export async function DELETE(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user || session.user.role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -19,7 +19,7 @@ export async function DELETE(
     await db
       .delete(onboardingModules)
       .where(eq(onboardingModules.id, parseInt(params.id)));
-      
+
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(
@@ -27,4 +27,40 @@ export async function DELETE(
       { status: 500 }
     );
   }
-} 
+}
+
+export async function PUT(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user || session.user.role !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = params;
+    const body = await request.json();
+    const { title, description, content, order } = body;
+
+    const [updatedModule] = await db
+      .update(onboardingModules)
+      .set({
+        title,
+        description,
+        content,
+        order,
+      })
+      .where(eq(onboardingModules.id, parseInt(id)))
+      .returning();
+
+    return NextResponse.json(updatedModule);
+  } catch (error) {
+    console.error('Error updating module:', error);
+    return NextResponse.json(
+      { error: 'Error updating module' },
+      { status: 500 }
+    );
+  }
+}

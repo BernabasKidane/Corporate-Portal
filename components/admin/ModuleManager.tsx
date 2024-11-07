@@ -11,6 +11,13 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { MoreVertical, Pencil, Trash } from 'lucide-react';
 
 interface Module {
   id: number;
@@ -21,6 +28,10 @@ interface Module {
     readingMaterial?: string;
   };
   order: number;
+}
+
+interface EditingState {
+  moduleId: number | null;
 }
 
 export function ModuleManager() {
@@ -36,6 +47,18 @@ export function ModuleManager() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editing, setEditing] = useState<EditingState>({
+    moduleId: null,
+  });
+  const [editForm, setEditForm] = useState({
+    title: '',
+    description: '',
+    content: {
+      videoUrl: '',
+      readingMaterial: '',
+    },
+    order: 1,
+  });
 
   useEffect(() => {
     fetchModules();
@@ -93,6 +116,36 @@ export function ModuleManager() {
     } catch (error) {
       setError('Failed to delete module');
       console.error(error);
+    }
+  };
+
+  const handleEditClick = (moduleId: number, module: Module) => {
+    setEditing({ moduleId });
+    setEditForm({
+      title: module.title,
+      description: module.description || '',
+      content: {
+        videoUrl: module.content.videoUrl || '',
+        readingMaterial: module.content.readingMaterial || '',
+      },
+      order: module.order,
+    });
+  };
+
+  const handleUpdateModule = async () => {
+    try {
+      const response = await fetch(`/api/admin/modules/${editing.moduleId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editForm),
+      });
+
+      if (response.ok) {
+        fetchModules();
+        setEditing({ moduleId: null });
+      }
+    } catch (error) {
+      console.error('Error updating module:', error);
     }
   };
 
@@ -193,40 +246,162 @@ export function ModuleManager() {
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">Existing Modules</h2>
         {modules.map((module) => (
-          <Card key={module.id}>
+          <Card key={module.id} className="mb-4">
             <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle>{module.title}</CardTitle>
-                  <CardDescription>Order: {module.order}</CardDescription>
-                </div>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleDelete(module.id)}
-                >
-                  Delete
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <p className="text-sm text-gray-600">{module.description}</p>
-                {module.content.videoUrl && (
-                  <p className="text-sm">
-                    <strong>Video URL:</strong> {module.content.videoUrl}
-                  </p>
-                )}
-                {module.content.readingMaterial && (
+              {editing.moduleId === module.id ? (
+                <div className="space-y-4">
                   <div>
-                    <strong className="text-sm">Reading Material:</strong>
-                    <p className="text-sm whitespace-pre-wrap mt-1">
-                      {module.content.readingMaterial}
+                    <label className="block text-sm font-medium mb-1">
+                      Title
+                    </label>
+                    <Input
+                      value={editForm.title}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, title: e.target.value })
+                      }
+                      placeholder="Title"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Description
+                    </label>
+                    <Textarea
+                      value={editForm.description || ''}
+                      onChange={(e) =>
+                        setEditForm({
+                          ...editForm,
+                          description: e.target.value,
+                        })
+                      }
+                      placeholder="Description"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Video URL
+                    </label>
+                    <Input
+                      value={editForm.content.videoUrl || ''}
+                      onChange={(e) =>
+                        setEditForm({
+                          ...editForm,
+                          content: {
+                            ...editForm.content,
+                            videoUrl: e.target.value,
+                          },
+                        })
+                      }
+                      placeholder="Video URL"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Reading Material
+                    </label>
+                    <Textarea
+                      value={editForm.content.readingMaterial || ''}
+                      onChange={(e) =>
+                        setEditForm({
+                          ...editForm,
+                          content: {
+                            ...editForm.content,
+                            readingMaterial: e.target.value,
+                          },
+                        })
+                      }
+                      placeholder="Reading Material"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Order
+                    </label>
+                    <Input
+                      type="number"
+                      value={editForm.order}
+                      onChange={(e) =>
+                        setEditForm({
+                          ...editForm,
+                          order: parseInt(e.target.value) || 1,
+                        })
+                      }
+                      placeholder="Order"
+                      min={1}
+                    />
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button onClick={handleUpdateModule} variant="default">
+                      Save
+                    </Button>
+                    <Button
+                      onClick={() => setEditing({ moduleId: null })}
+                      variant="outline"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>{module.title}</CardTitle>
+                    <CardDescription>{module.description}</CardDescription>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => handleEditClick(module.id, module)}
+                      >
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleDelete(module.id)}
+                        className="text-red-600"
+                      >
+                        <Trash className="mr-2 h-4 w-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              )}
+            </CardHeader>
+            {editing.moduleId !== module.id && (
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    {module.content.videoUrl && (
+                      <p className="text-sm">
+                        <strong>Video URL:</strong> {module.content.videoUrl}
+                      </p>
+                    )}
+                    {module.content.readingMaterial && (
+                      <div>
+                        <strong className="text-sm">Reading Material:</strong>
+                        <p className="text-sm whitespace-pre-wrap mt-1">
+                          {module.content.readingMaterial}
+                        </p>
+                      </div>
+                    )}
+                    <p className="text-sm">
+                      <strong>Order:</strong> {module.order}
                     </p>
                   </div>
-                )}
-              </div>
-            </CardContent>
+                </div>
+              </CardContent>
+            )}
           </Card>
         ))}
       </div>
