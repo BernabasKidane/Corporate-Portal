@@ -1,4 +1,4 @@
-# Next.js Onboarding Quiz Application
+# Trade Ethiopia comapny Portal
 
 A modern web application built with Next.js that features an interactive onboarding process with a quiz component.
 
