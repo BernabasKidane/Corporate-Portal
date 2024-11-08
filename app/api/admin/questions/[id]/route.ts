@@ -1,30 +1,46 @@
+import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { quizQuestions } from '@/lib/schema';
-import { eq } from 'drizzle-orm';
-import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { eq } from 'drizzle-orm';
+import { users } from '@/lib/schema';
 
-export async function DELETE(
+export async function PUT(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
-
-    if (!session?.user || (session.user as any).role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session?.user?.email) {
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    await db
-      .delete(quizQuestions)
-      .where(eq(quizQuestions.id, parseInt(params.id)));
+    const user = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, session.user.email));
 
-    return NextResponse.json({ success: true });
+    if (user?.[0]?.role !== 'admin') {
+      return new NextResponse('Forbidden', { status: 403 });
+    }
+
+    const data = await request.json();
+    const questionId = parseInt(params.id);
+
+    const [updatedQuestion] = await db
+      .update(quizQuestions)
+      .set({
+        question: data.question,
+        options: data.options,
+        correctAnswer: data.correctAnswer,
+      })
+      .where(eq(quizQuestions.id, questionId))
+      .returning();
+
+    return NextResponse.json(updatedQuestion);
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to delete question' },
-      { status: 500 }
-    );
+    console.error('Error updating question:', error);
+    return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
